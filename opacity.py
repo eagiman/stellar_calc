@@ -3,7 +3,8 @@ import numpy as np
 from scipy.interpolate import RegularGridInterpolator
 
 def load_opacity_table(table="top73.txt"):
-    """Construct an interpolator for 
+    """
+    Construct an interpolator for the full opacity table
 
     Parameters
     ----------
@@ -29,7 +30,8 @@ def load_opacity_table(table="top73.txt"):
     return RegularGridInterpolator((indices, columns), values, bounds_error=False, fill_value=None)
 
 def get_opacity(T, rho, table="top73.txt"):
-    """_summary_
+    """
+    Interpolate to get opacity
 
     Parameters
     ----------
@@ -49,7 +51,8 @@ def get_opacity(T, rho, table="top73.txt"):
     # Construct interp
     interp = load_opacity_table(table=table)
 
-    T6 = T / 1.e6
+    T = np.clip(T, 10**3.5, 10**9)
+    T6 = T / 1e6
     log_R = np.log10(rho/T6**3)
 
-    return interp((np.log10(T), log_R))
+    return 10**interp((np.log10(T), log_R))
