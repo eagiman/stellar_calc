@@ -29,7 +29,10 @@ def load_opacity_table(table="top73.txt"):
     # Construct interpolator and return
     return RegularGridInterpolator((indices, columns), values, bounds_error=False, fill_value=None)
 
-def get_opacity(T, rho, table="top73.txt"):
+# Create interp object
+interp = load_opacity_table(table="top73.txt")
+
+def get_opacity(T, rho):
     """
     Interpolate to get opacity
 
@@ -39,20 +42,18 @@ def get_opacity(T, rho, table="top73.txt"):
         Temperature in K
     rho : float
         Density in g cm^-3
-    table : str, optional
-        file name of opacity table as a .txt file, by default "top73.txt"
 
     Returns
     -------
     float
         Interpolated opacity value for given T and rho
     """
-    
-    # Construct interp
-    interp = load_opacity_table(table=table)
 
+    # Clip T
     T = np.clip(T, 10**3.5, 10**9)
     T6 = T / 1e6
-    log_R = np.log10(rho/T6**3)
+    R = rho/T6**3
+    # Clip R
+    R = np.clip(R, 1e-10, 10)
 
-    return 10**interp((np.log10(T), log_R))
+    return 10**interp((np.log10(T), np.log10(R)))
