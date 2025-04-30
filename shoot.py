@@ -110,7 +110,7 @@ def match(guess):
 
 def newt(initial):
     """
-    Run root interatively to get converging values 
+    Run root iteratively to get converging values (based very very loosely on newt from numerical recipes)
 
     Parameters
     ----------
