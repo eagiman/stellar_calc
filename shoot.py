@@ -49,8 +49,8 @@ def shootf(guess, fine=False):
     m_int = M / 3
 
     if fine:
-        steps_in = np.linspace(M, m_int, 10000)
-        steps_out = np.linspace(1e-6, m_int, 5000)
+        steps_in = np.linspace(M, m_int, 1000)
+        steps_out = np.linspace(1e-6, m_int, 500)
     else:
         steps_in, steps_out = None, None
 
