@@ -4,10 +4,13 @@ from opacity import get_opacity
 from constants import * # in cgs units
 from scipy.integrate import solve_ivp
 
-# Chosen Metallicity
+# Chosen metallicity
 X = 0.7
 Y = 0.28
 Z = 0.02
+
+# Chosen mass
+M = 1.1 * Ms
 
 def get_mu(X=X, Y=Y):
     """
@@ -25,9 +28,8 @@ def get_mu(X=X, Y=Y):
     float
         mean molecular weight
     """
-    Z = 1 - X - Y
 
-    return 1/(2*X + 3*Y/4 + Z/2)
+    return 4/(6*X + Y + 2)
 
 mu = get_mu()
 
@@ -89,7 +91,7 @@ def get_energy(T, rho):
     elif T7 > 3.:
         psi = 1.4
     else:
-        psi = 0.8 + (2*T7)
+        psi = 0.8 + (0.2*T7)
 
     # pp chain energy
     pp  = 2.57e4 * psi * f11 * g11 * rho * X**2 * T9**(-2/3) * np.exp(-3.381/T9**(1/3))
