@@ -86,12 +86,12 @@ def get_energy(T, rho):
     g141 = 1 - 2*T9 + 3.41*T9**2 - 2.43*T9**3
 
     # Determine psi
-    if T7 < 1.:
-        psi = 1.
-    elif T7 > 3.:
+    if T7 < 1:
+        psi = 1
+    elif T7 > 3:
         psi = 1.4
     else:
-        psi = 0.8 + (0.2*T7)
+        psi = 0.9 + (0.2*T7)
 
     # pp chain energy
     pp  = 2.57e4 * psi * f11 * g11 * rho * X**2 * T9**(-2/3) * np.exp(-3.381/T9**(1/3))
