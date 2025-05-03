@@ -86,23 +86,28 @@ def get_energy(T, rho):
     g141 = 1 - 2*T9 + 3.41*T9**2 - 2.43*T9**3
 
     # Determine psi
-    if T7 < 1:
-        psi = 1
-    elif T7 > 3:
-        psi = 1.4
-    else:
-        psi = 0.9 + (0.2*T7)
+    # if T7 < 1:
+    #     psi = 1
+    # elif T7 > 3:
+    #     psi = 1.4
+    # else:
+    #     psi = 0.9 + (0.2*T7)
+
+    psi = np.where(T7 < 1, 1.0, np.where(T7 > 3, 1.4, 0.9 + 0.2 * T7))
+    
+    # From opacity table
+    X_cno = 0.001021 + 0.002564 + 0.01172
 
     # pp chain energy
     pp  = 2.57e4 * psi * f11 * g11 * rho * X**2 * T9**(-2/3) * np.exp(-3.381/T9**(1/3))
     # cno cycle energy
-    cno = 8.24e25 * g141 * Z * X * rho * T9**(-2/3) * np.exp(-15.231*T9**(-1/3) - (T9/0.8)**2)
+    cno = 8.24e25 * g141 * X_cno * X * rho * T9**(-2/3) * np.exp(-15.231*T9**(-1/3) - (T9/0.8)**2)
 
-    # Check if pp is nan
-    if np.isfinite(pp):
-        return pp + cno
-    else:
-        return cno
+    return pp + cno
+    
+
+def grad_rad(P, T, kappa, l, m):
+    return (3 / (16 * np.pi * a * c * G)) * ( kappa * l * P / (m * T**4))
 
 
 def get_grad(P, T, kappa, l, m):
