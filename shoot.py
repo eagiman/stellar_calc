@@ -6,19 +6,12 @@ from scipy.optimize import root
 M = 1.1 * Ms
 
 # Initial guesses
-
-# Homology relations
-# R = (M/Ms)**0.75 * Rs 
-# L = (M/Ms)**3.5 * Ls 
-# # Assume constant density at center
-# T_c = 1/2 * 4/(mu * na * k) * G*M/R
-# P_c = 3/(8*np.pi) * G * M**2 / R**4
-
-R = ((M/Ms)**(0.75))*Rs 
+R = ((M/Ms)**(0.75)) * Rs 
 L = ((M/Ms)**(3.5))*Ls 
 P_c = (3/(8*np.pi))*(G*(M)**2)/(R)**4 
 T_c = (((1/2)*mu)/(na*k))*(G*M)/(R) 
 initial_guess = [L, P_c, R, T_c]
+
 
 def shootf(guess, fine=False):
     """
@@ -108,7 +101,7 @@ def match(guess):
     residuals = (vals_in - vals_out) / initial_guess
     return residuals
 
-def newt(initial):
+def newt(initial, print_sol=False):
     """
     Run root iteratively to get converging values (based very very loosely on newt from numerical recipes)
 
@@ -137,6 +130,8 @@ def newt(initial):
 
     if status==1:
         print(f"Success! Converged in {runs} runs of root.")
+    if print_sol==True:
+        print(trying)
     return trying.x
     
 
