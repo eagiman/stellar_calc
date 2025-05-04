@@ -85,18 +85,10 @@ def get_energy(T, rho):
     g11 = 1 + (3.82*T9) + (1.51*T9**2) + (0.144*T9**3) - (0.0114*T9**4)
     g141 = 1 - 2*T9 + 3.41*T9**2 - 2.43*T9**3
 
-    # Determine psi
-    # if T7 < 1:
-    #     psi = 1
-    # elif T7 > 3:
-    #     psi = 1.4
-    # else:
-    #     psi = 0.9 + (0.2*T7)
-
     psi = np.where(T7 < 1, 1.0, np.where(T7 > 3, 1.4, 0.9 + 0.2 * T7))
-    
-    # From opacity table
-    X_cno = 0.001021 + 0.002564 + 0.01172
+
+    # CNO metal fraction taken from opacity table
+    X_cno = Z * (0.313563+0.124832+0.227156)
 
     # pp chain energy
     pp  = 2.57e4 * psi * f11 * g11 * rho * X**2 * T9**(-2/3) * np.exp(-3.381/T9**(1/3))
