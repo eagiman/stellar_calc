@@ -10,7 +10,7 @@ Y = 0.28
 Z = 0.02
 
 # Chosen mass
-M = 1.1 * Ms
+M = 1.5 * Ms
 
 def get_mu(X=X, Y=Y):
     """
@@ -160,9 +160,15 @@ def get_energy(T, rho):
     cno = get_cno(T, rho)
 
     return pp + cno
-    
 
-def grad_rad(P, T, kappa, l, m):
+def get_grad_ad(P, T):
+
+    P_rad = (a * T**4)/3
+    P_gas = P - P_rad
+    beta = P_gas/P
+    return 2 * (4 - 3*beta)/(32 - 24*beta - 3*beta**2)
+
+def get_grad_rad(P, T, kappa, l, m):
     return (3 / (16 * np.pi * a * c * G)) * ( kappa * l * P / (m * T**4))
 
 
@@ -188,11 +194,13 @@ def get_grad(P, T, kappa, l, m):
     float
         Appropriate gradient value
     """
-    grad_ad = 0.4
-    grad_rad = (3 / (16 * np.pi * a * c * G)) * ( kappa * l * P / (m * T**4))
+    #grad_ad = 0.4
+    #grad_rad = (3 / (16 * np.pi * a * c * G)) * ( kappa * l * P / (m * T**4))
+    grad_ad = get_grad_ad(P, T)
+    grad_rad = get_grad_rad(P, T, kappa, l, m)
 
     # Proper regime is whichever gradient is lower
-    return np.min([grad_ad, grad_rad])
+    return np.minimum(grad_ad, grad_rad)
 
 def load1(P_c, T_c):
     """
@@ -227,7 +235,7 @@ def load1(P_c, T_c):
     kappa = get_opacity(T_c, rho_c)
     grad = get_grad(P_c, T_c, kappa, l, m)
 
-    if grad == 0.4: # Convective case
+    if grad == get_grad_ad(P_c, T_c): # Convective case
         rhs = -(np.pi/6)**(1/3) * G * (grad * rho_c**(4/3) / P_c) * m**(2/3)
         T = np.exp(rhs + np.log(T_c))
     else: # Radiative case
