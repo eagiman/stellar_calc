@@ -3,7 +3,7 @@ from structure import *
 from scipy.integrate import solve_ivp
 from scipy.optimize import root
 
-M = 1.1 * Ms
+M = 1.5 * Ms
 
 # Initial guesses
 
@@ -15,10 +15,12 @@ L = ((M/Ms)**(3.5))*Ls
 P_c = (3/(8*np.pi))*(G*(M)**2)/(R)**4 
 T_c = (((1/2)*mu)/(na*k))*(G*M)/(R) 
 
-#initial_guess = [L, P_c, R, T_c]
-
 # Using sun fact sheet from NASA for P_c and T_c guess
 initial_guess = [L, 2.477e17, R, 1.571e7]
+
+# For testing
+constant_density = [L, P_c, R, T_c]
+solar = [Ls, 2.477e17, Rs, 1.571e7]
 
 def shootf(guess, fine=False):
     """
