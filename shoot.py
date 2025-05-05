@@ -6,12 +6,19 @@ from scipy.optimize import root
 M = 1.1 * Ms
 
 # Initial guesses
+
+# Homology
 R = ((M/Ms)**(0.75)) * Rs 
 L = ((M/Ms)**(3.5))*Ls 
+
+# Constant Density
 P_c = (3/(8*np.pi))*(G*(M)**2)/(R)**4 
 T_c = (((1/2)*mu)/(na*k))*(G*M)/(R) 
-initial_guess = [L, P_c, R, T_c]
 
+#initial_guess = [L, P_c, R, T_c]
+
+# Using sun fact sheet from NASA for P_c and T_c guess
+initial_guess = [L, 2.477e17, R, 1.571e7]
 
 def shootf(guess, fine=False):
     """
@@ -98,7 +105,8 @@ def match(guess):
         return np.ones(4) * 1e10
     
     # Normalized difference at intermediate point
-    residuals = (vals_in - vals_out) / initial_guess
+    scale = (vals_in + vals_out) / 2
+    residuals = (vals_in - vals_out) / scale
     return residuals
 
 def newt(initial, print_sol=False):
@@ -133,5 +141,3 @@ def newt(initial, print_sol=False):
     if print_sol==True:
         print(trying)
     return trying.x
-    
-
