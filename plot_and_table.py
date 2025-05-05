@@ -8,6 +8,7 @@ plt.style.use(["science", "notebook"])
 colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
 M = 1.5 * Ms
+
 # Intermediary point in solar mass
 m_int = (M/Ms)/3
 
@@ -39,8 +40,9 @@ def make_csv(sol, save=False):
     df["pp"] = get_pp(T, df["density"])
     df["cno"] = get_cno(T, df["density"])
     df["opacity"] = get_opacity(T, df["density"])
-    df["adiabatic gradient"] = np.ones(len(m)) * 0.4
-    df["radiative gradient"] = grad_rad(P, T, df["opacity"], L, m)
+    #df["adiabatic gradient"] = np.ones(len(m)) * 0.4
+    df["adiabatic gradient"] = get_grad_ad(P, T)
+    df["radiative gradient"] = get_grad_rad(P, T, df["opacity"], L, m)
     df["actual gradient"] = np.where(df["adiabatic gradient"] < df["radiative gradient"], df["adiabatic gradient"], df["radiative gradient"])
     df["regime"] = np.where(df["adiabatic gradient"] < df["radiative gradient"], "convective", "radiative")
     
@@ -229,43 +231,45 @@ def plot_mesa(sol, p5, save=False, name="mesa_plot"):
         plt.savefig(save_as, dpi=600)
     plt.show()
 
-def frac_diff(measured, true):
+def error(measured, true):
         return np.abs(measured - true)/true
 
-def diffs(sol, p5, save=False):
+def frac_diffs(sol, p5):
 
     best_in, best_out = shootf(sol, fine=True)
 
-    energy = p5.pp + p5.cno
-    energy_order = energy[::-1]
-    mass_order = p5.mass[::-1]
-    dm = np.diff(mass_order)
-    energy_mid = (energy_order[:-1] + energy_order[1:])/2
-    dl = energy_mid * dm
-    l = np.cumsum(dl)
-    l = l[::-1] * Ls
+    l = get_mesa_lum(p5)
+    my_L = sol[0]
+    mesa_L = l[0]
+
+    my_P = sol[1]
+    mesa_P = p5.P[-1]
 
     my_R = sol[2]
     mesa_R = p5.R[0] * Rs
 
-    my_L = sol[0]
-    mesa_L = l[0]
-
-    my_g = G*M / my_R**2
-    mesa_g = G*M / mesa_R**2
+    my_T_c = sol[3]
+    mesa_T_c = p5.T[-1]
 
     my_T_eff = best_in.y[3][0]
     mesa_T_eff = p5.T[0]
 
-    R_error = frac_diff(my_R, mesa_R)
-    L_error = frac_diff(my_L, mesa_L)
-    g_error = frac_diff(my_g, mesa_g)
-    T_eff_error = frac_diff(my_T_eff, mesa_T_eff)
+    my_g = G*M / my_R**2
+    mesa_g = G*M / mesa_R**2
 
-    print(f"R error: {R_error}")
+    L_error = error(my_L, mesa_L)
+    P_error = error(my_P, mesa_P)
+    R_error = error(my_R, mesa_R)
+    T_c_error = error(my_T_c, mesa_T_c)
+    T_eff_error = error(my_T_eff, mesa_T_eff)
+    g_error = error(my_g, mesa_g)
+
     print(f"L error: {L_error}")
+    print(f"P_c error: {P_error}")
+    print(f"R error: {R_error}")
+    print(f"T_c error: {T_c_error}")
+    print(f"T_eff error: {T_eff_error}")
     print(f"g error: {g_error}")
-    print(f"T error: {T_eff_error}")
 
 def plot_grad(solution, save=False):
     sol_in, sol_out = shootf(solution, fine=True)
@@ -286,8 +290,11 @@ def plot_grad(solution, save=False):
     grad_rad_in = (3 / (16 * np.pi * a * c * G)) * ( kappa_in * L_in * P_in / (m_in * T_in**4))
     grad_rad_out = (3 / (16 * np.pi * a * c * G)) * ( kappa_out * L_out * P_out / (m_out * T_out**4))
 
-    grad_ad_in = np.ones(len(m_in_sol)) * 0.4
-    grad_ad_out = np.ones(len(m_out_sol)) * 0.4
+    # grad_ad_in = np.ones(len(m_in_sol)) * 0.4
+    # grad_ad_out = np.ones(len(m_out_sol)) * 0.4
+
+    grad_ad_in = get_grad_ad(P_in, T_in)
+    grad_ad_out = get_grad_ad(P_out, T_out)
 
     grad_in = get_grad(P_in, T_in, kappa_in, L_in, m_in)
     grad_out = get_grad(P_out, T_out, kappa_out, L_out, m_out)
