@@ -12,7 +12,10 @@ M = 1.5 * Ms
 # Intermediary point in solar mass
 m_int = (M/Ms)/3
 
-def concat(going_in, going_out):
+def concat(guess, fine=False):
+
+    going_in, going_out = shootf(guess, fine=fine)
+
     L_in, P_in, R_in, T_in = going_in.y
     L_out, P_out, R_out, T_out = going_out.y
     L = np.concatenate([L_out[:-1], L_in[::-1]])
@@ -20,11 +23,12 @@ def concat(going_in, going_out):
     R = np.concatenate([R_out[:-1], R_in[::-1]])
     T = np.concatenate([T_out[:-1], T_in[::-1]])
     m = np.concatenate([going_out.t[:-1], going_in.t[::-1]])
+
     return L, P, R, T, m
     
 def make_csv(sol, save=False):
-    best_in, best_out = shootf(sol)
-    L, P, R, T, m = concat(best_in, best_out)
+
+    L, P, R, T, m = concat(sol)
     
     dic = {
         "m": m,
@@ -47,7 +51,7 @@ def make_csv(sol, save=False):
     df["regime"] = np.where(df["adiabatic gradient"] < df["radiative gradient"], "convective", "radiative")
     
     if save:
-        df.to_csv('one_point_five_table.csv', index=False)
+        df.to_csv('results.csv', index=False)
 
     return df
 
@@ -63,66 +67,50 @@ def get_mesa_lum(p5):
     return l
 
 
-def plot_quad(sol, save=False, name="plot"):
+def plot(sol, name=None):
 
-    best_in, best_out = shootf(sol, fine=True)
+    L, P, R, T, m_g = concat(sol, fine=True)
 
-    solar_m_in = best_in.t/Ms
-    solar_m_out = best_out.t/Ms
-    all_in_sol = best_in.y
-    all_out_sol = best_out.y
+    m = m_g/Ms
 
     fig, ((ax0, ax1), (ax2, ax3)) = plt.subplots(2,2, figsize=(14,10))
 
     # plot l
-    ax0.plot(solar_m_in, all_in_sol[0], c=colors[0])
-    ax0.plot(solar_m_out, all_out_sol[0], c=colors[0])
+    ax0.plot(m, L, c=colors[0])
     ax0.set_ylabel(r"Luminosity (erg s$^{-1}$)")
     ax0.set_xlabel(r"Mass (M/M$_{\odot})$")
     ax0.axvline(m_int, c="silver", ls="--")
 
     # plot P
-    ax1.plot(solar_m_in, all_in_sol[1], c=colors[1])
-    ax1.plot(solar_m_out, all_out_sol[1], c=colors[1])
+    ax1.plot(m, P, c=colors[1])
     ax1.set_ylabel(r"Pressure (dyn cm$^{-2}$)")
     ax1.set_xlabel(r"Mass (M/M$_{\odot})$")
     ax1.axvline(m_int, c="silver", ls="--", label="Fitting Point")
 
     # plot r
-    ax2.plot(solar_m_in, all_in_sol[2], c=colors[2])
-    ax2.plot(solar_m_out, all_out_sol[2], c=colors[2])
+    ax2.plot(m, R, c=colors[2])
     ax2.set_ylabel("Radius (cm)")
     ax2.set_xlabel(r"Mass (M/M$_{\odot})$")
     ax2.axvline(m_int, c="silver", ls="--")
 
     # plot T
-    ax3.plot(solar_m_in, all_in_sol[3], c=colors[3])
-    ax3.plot(solar_m_out, all_out_sol[3], c=colors[3])
+    ax3.plot(m, T, c=colors[3])
     ax3.set_ylabel("Temperature (K)")
     ax3.set_xlabel(r"Mass (M/M$_{\odot})$")
     ax3.axvline(m_int, c="silver", ls="--")
 
     ax1.legend()
     
-    if save:
-        save_as = name + ".png"
+    if name is not None:
+        save_as = name + ".pdf"
         plt.savefig(save_as, dpi=600)
     plt.show() 
 
-def plot_over(sol, initial, save=False, name="over_plot"):
+def plot_over(sol, initial, name=None):
 
-    best_in, best_out = shootf(sol, fine=True)
-    init_in, init_out = shootf(initial, fine=True)
-
-    solar_m_in = best_in.t/Ms
-    solar_m_out = best_out.t/Ms
-    all_in_sol = best_in.y
-    all_out_sol = best_out.y
-
-    init_m_in = init_in.t/Ms
-    init_m_out = init_out.t/Ms
-    init_all_in = init_in.y
-    init_all_out = init_out.y
+    L, P, R, T, m_g = concat(sol, fine=True)
+    L_init, P_init, R_init, T_init, m_g_init = concat(initial, fine=True)
+    m = m_g/Ms
 
     # Fitting point
     m_int = (M/Ms)/3
@@ -130,37 +118,29 @@ def plot_over(sol, initial, save=False, name="over_plot"):
     fig, ((ax0, ax1), (ax2, ax3)) = plt.subplots(2,2, figsize=(14,10))
 
     # plot l
-    ax0.plot(solar_m_in, all_in_sol[0], c=colors[0], label="Converged Luminosity")
-    ax0.plot(solar_m_out, all_out_sol[0], c=colors[0])
-    ax0.plot(init_m_in, init_all_in[0], c=colors[0], alpha=0.8, ls=(0, (1, 1)), label="Initial Luminosity")
-    ax0.plot(init_m_out, init_all_out[0], c=colors[0], alpha=0.8, ls=(0, (1, 1)))
+    ax0.plot(m, L, c=colors[0], label="Converged Luminosity")
+    ax0.plot(m, L_init, c=colors[0], alpha=0.8, ls=(0, (1, 1)), label="Initial Luminosity")
     ax0.set_ylabel(r"Luminosity (erg s$^{-1}$)")
     ax0.set_xlabel(r"Mass (M/M$_{\odot})$")
     ax0.axvline(m_int, c="silver", ls="--")
 
     # plot P
-    ax1.plot(solar_m_in, all_in_sol[1], c=colors[1], label="Converged Pressure")
-    ax1.plot(solar_m_out, all_out_sol[1], c=colors[1])
-    ax1.plot(init_m_in, init_all_in[1], c=colors[1], alpha=0.8, ls=(0, (1, 1)), label="Initial Pressure")
-    ax1.plot(init_m_out, init_all_out[1], c=colors[1], alpha=0.8, ls=(0, (1, 1)))
+    ax1.plot(m, P, c=colors[1], label="Converged Pressure")
+    ax1.plot(m, P_init, c=colors[1], alpha=0.8, ls=(0, (1, 1)), label="Initial Pressure")
     ax1.set_ylabel(r"Pressure (dyn cm$^{-2}$)")
     ax1.set_xlabel(r"Mass (M/M$_{\odot})$")
     ax1.axvline(m_int, c="silver", ls="--")
 
     # plot r
-    ax2.plot(solar_m_in, all_in_sol[2], c=colors[2], label="Converged Radius")
-    ax2.plot(solar_m_out, all_out_sol[2], c=colors[2])
-    ax2.plot(init_m_in, init_all_in[2], c=colors[2], alpha=0.8, ls=(0, (1, 1)), label="Initial Radius")
-    ax2.plot(init_m_out, init_all_out[2], c=colors[2], alpha=0.8, ls=(0, (1, 1)))
+    ax2.plot(m, R, c=colors[2], label="Converged Radius")
+    ax2.plot(m, R_init, c=colors[2], alpha=0.8, ls=(0, (1, 1)), label="Initial Radius")
     ax2.set_ylabel("Radius (cm)")
     ax2.set_xlabel(r"Mass (M/M$_{\odot})$")
     ax2.axvline(m_int, c="silver", ls="--")
 
     # plot T
-    ax3.plot(solar_m_in, all_in_sol[3], c=colors[3], label="Converged Temperature")
-    ax3.plot(solar_m_out, all_out_sol[3], c=colors[3])
-    ax3.plot(init_m_in, init_all_in[3], c=colors[3], alpha=0.8, ls=(0, (1, 1)), label="Initial Temperature")
-    ax3.plot(init_m_out, init_all_out[3], c=colors[3], alpha=0.8, ls=(0, (1, 1)))
+    ax3.plot(m, T, c=colors[3], label="Converged Temperature")
+    ax3.plot(m, T_init, c=colors[3], alpha=0.8, ls=(0, (1, 1)), label="Initial Temperature")
     ax3.set_ylabel("Temperature (K)")
     ax3.set_xlabel(r"Mass (M/M$_{\odot})$")
     ax3.axvline(m_int, c="silver", ls="--")
@@ -170,19 +150,15 @@ def plot_over(sol, initial, save=False, name="over_plot"):
    # ax2.legend()
    # ax3.legend()
 
-    if save:
-        save_as = name + ".png"
+    if name is not None:
+        save_as = name + ".pdf"
         plt.savefig(save_as, dpi=600)
     plt.show()
 
-def plot_mesa(sol, p5, save=False, name="mesa_plot"):
+def plot_mesa(sol, p5, name=None):
 
-    best_in, best_out = shootf(sol, fine=True)
-
-    solar_m_in = best_in.t/Ms
-    solar_m_out = best_out.t/Ms
-    all_in_sol = best_in.y
-    all_out_sol = best_out.y
+    L, P, R, T, m_g = concat(sol, fine=True)
+    m = m_g/Ms
 
     # Fitting point
     m_int = (M/Ms)/3
@@ -192,33 +168,28 @@ def plot_mesa(sol, p5, save=False, name="mesa_plot"):
     fig, ((ax0, ax1), (ax2, ax3)) = plt.subplots(2,2, figsize=(14,10))
 
     # plot l
-    ax0.plot(solar_m_in, all_in_sol[0], c=colors[0])
-    ax0.plot(solar_m_out, all_out_sol[0], c=colors[0])
-    #ax0.plot(p5.mass, init_all_in[0], c=colors[0], alpha=0.4)
+    ax0.plot(m, L, c=colors[0])
     ax0.plot(p5.mass[:-1], l, c=colors[4])
     ax0.set_ylabel(r"Luminosity (erg s$^{-1}$)")
     ax0.set_xlabel(r"Mass (M/M$_{\odot})$")
     ax0.axvline(m_int, c="silver", ls="--")
 
     # plot P
-    ax1.plot(solar_m_in, all_in_sol[1], c=colors[1])
-    ax1.plot(solar_m_out, all_out_sol[1], c=colors[1])
+    ax1.plot(m, P, c=colors[1])
     ax1.plot(p5.mass, p5.P, c=colors[4], label="MESA")
     ax1.set_ylabel(r"Pressure (dyn cm$^{-2}$)")
     ax1.set_xlabel(r"Mass (M/M$_{\odot})$")
     ax1.axvline(m_int, c="silver", ls="--")
 
     # plot r
-    ax2.plot(solar_m_in, all_in_sol[2], c=colors[2])
-    ax2.plot(solar_m_out, all_out_sol[2], c=colors[2])
+    ax2.plot(m, R, c=colors[2])
     ax2.plot(p5.mass, p5.R*Rs, c=colors[4])
     ax2.set_ylabel("Radius (cm)")
     ax2.set_xlabel(r"Mass (M/M$_{\odot})$")
     ax2.axvline(m_int, c="silver", ls="--")
 
     # plot T
-    ax3.plot(solar_m_in, all_in_sol[3], c=colors[3])
-    ax3.plot(solar_m_out, all_out_sol[3], c=colors[3])
+    ax3.plot(m, T, c=colors[3])
     ax3.plot(p5.mass, p5.T, c=colors[4])
     ax3.set_ylabel("Temperature (K)")
     ax3.set_xlabel(r"Mass (M/M$_{\odot})$")
@@ -226,8 +197,8 @@ def plot_mesa(sol, p5, save=False, name="mesa_plot"):
 
     ax1.legend()
 
-    if save:
-        save_as = name + ".png"
+    if name is not None:
+        save_as = name + ".pdf"
         plt.savefig(save_as, dpi=600)
     plt.show()
 
@@ -271,50 +242,32 @@ def frac_diffs(sol, p5):
     print(f"T_eff error: {T_eff_error}")
     print(f"g error: {g_error}")
 
-def plot_grad(solution, save=False):
-    sol_in, sol_out = shootf(solution, fine=True)
+def plot_grad(sol, name=None):
 
-    m_in, m_in_sol = sol_in.t, sol_in.t/Ms
-    m_out, m_out_sol = sol_out.t, sol_out.t/Ms
-    m_all = np.concatenate((m_out_sol, m_in_sol))
+    L, P, R, T, m_g = concat(sol, fine=True)
+    m = m_g/Ms
 
-    L_in, P_in, R_in, T_in = sol_in.y
-    L_out, P_out, R_out, T_out = sol_out.y
+    rho = get_density(P, T)
+    kappa = get_opacity(T, rho)
 
-    rho_in = get_density(P_in, T_in)
-    rho_out = get_density(P_out, T_out)
-
-    kappa_in = get_opacity(T_in, rho_in)
-    kappa_out = get_opacity(T_out, rho_out)
+    grad_rad = get_grad_rad(P, T, kappa, L, m_g)
+    grad_ad = get_grad_ad(P, T)
+    grad = get_grad(P, T, kappa, L, m_g)
     
-    grad_rad_in = (3 / (16 * np.pi * a * c * G)) * ( kappa_in * L_in * P_in / (m_in * T_in**4))
-    grad_rad_out = (3 / (16 * np.pi * a * c * G)) * ( kappa_out * L_out * P_out / (m_out * T_out**4))
-
-    # grad_ad_in = np.ones(len(m_in_sol)) * 0.4
-    # grad_ad_out = np.ones(len(m_out_sol)) * 0.4
-
-    grad_ad_in = get_grad_ad(P_in, T_in)
-    grad_ad_out = get_grad_ad(P_out, T_out)
-
-    grad_in = get_grad(P_in, T_in, kappa_in, L_in, m_in)
-    grad_out = get_grad(P_out, T_out, kappa_out, L_out, m_out)
 
     plt.figure(figsize=(12,5))
 
-    plt.plot(m_in_sol, grad_rad_in, c="dodgerblue")
 
-    plt.plot(m_out_sol, grad_rad_out, c="dodgerblue", label=r"$\nabla_{\text{rad}}$")
-    plt.plot(m_in_sol, grad_ad_in, c="crimson", label=r"$\nabla_{\text{ad}}$")
-    plt.plot(m_out_sol, grad_ad_out, c="crimson")
-    
-    plt.plot(m_in_sol, grad_in, c="black", ls="--", label=r"$\nabla$")
-    plt.plot(m_out_sol, grad_out, c="black", ls="--")    
+    plt.plot(m, grad_rad, c="dodgerblue", label=r"$\nabla_{\text{rad}}$")
+    plt.plot(m, grad_ad, c="crimson", label=r"$\nabla_{\text{ad}}$")
+    plt.plot(m, grad, c="black", ls="dashdot", label=r"$\nabla$")
     
     plt.xlabel(r"Mass (M/M$_{\odot}$)")
     plt.ylabel(r"Temperature Gradient $\nabla$")
     plt.legend()
 
-    if save:
-        plt.savefig("one_point_five_grad.png", dpi=600)
+    if name is not None:
+        save_as = name + ".pdf"
+        plt.savefig(save_as, dpi=600)
 
     plt.show()
