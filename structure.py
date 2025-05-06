@@ -134,47 +134,60 @@ def get_energy(T, rho):
         Total energy generated in g cm^2 s^-2 (erg)
     """
 
-    # # Put temp in useful variables
-    # T7 = T/1e7
-    # T9 = T/1e9
-
-    # EkT = 5.92e-3 * np.sqrt(rho/T7**3)
-    # # Weak screening factor
-    # f11 = np.exp(EkT)
-    # # g factors
-    # g11 = 1 + (3.82*T9) + (1.51*T9**2) + (0.144*T9**3) - (0.0114*T9**4)
-    # g141 = 1 - 2*T9 + 3.41*T9**2 - 2.43*T9**3
-
-    # #psi = np.where(T7 < 1, 1.0, np.where(T7 > 3, 1.4, 0.9 + 0.2 * T7))
-
-    # psi = 1
-    
-    # # From opacity table
-    # X_cno = 0.001021 + 0.002564 + 0.01172
-
-    # # pp chain energy
-    # pp  = 2.57e4 * psi * f11 * g11 * rho * X**2 * T9**(-2/3) * np.exp(-3.381/T9**(1/3))
-    # # cno cycle energy
-    # cno = 8.24e25 * g141 * X_cno * X * rho * T9**(-2/3) * np.exp(-15.231*T9**(-1/3) - (T9/0.8)**2)
     pp = get_pp(T, rho)
     cno = get_cno(T, rho)
 
     return pp + cno
 
 def get_grad_ad(P, T):
+    """
+    Calculate adiabatic gradient (should be around 0.4)
 
+    Parameters
+    ----------
+    P : float
+        Pressure in g cm^-1 s^-2
+    T : float
+        Temperature in K
+
+    Returns
+    -------
+    float
+        adiabatic gradient
+    """
     P_rad = (a * T**4)/3
     P_gas = P - P_rad
     beta = P_gas/P
     return 2 * (4 - 3*beta)/(32 - 24*beta - 3*beta**2)
 
 def get_grad_rad(P, T, kappa, l, m):
+    """
+    calculate radiative gradient
+
+    Parameters
+    ----------
+    P : float
+        Pressure in g cm^-1 s^-2
+    T : float
+        Temperature in K
+    kappa : float
+        Opacity in cm^2 g^-1
+    l : float
+        Luminosity in g cm^2 s^-3 (erg/s)
+    m : float
+        Mass in g
+
+    Returns
+    -------
+    float
+        radiative
+    """
     return (3 / (16 * np.pi * a * c * G)) * ( kappa * l * P / (m * T**4))
 
 
 def get_grad(P, T, kappa, l, m):
     """
-    Calculate radiative gradient and determine whether the radiative or adiabatic regime is appropriate
+    Determine whether the radiative or adiabatic regime is appropriate, return lower one
 
     Parameters
     ----------
@@ -194,8 +207,7 @@ def get_grad(P, T, kappa, l, m):
     float
         Appropriate gradient value
     """
-    #grad_ad = 0.4
-    #grad_rad = (3 / (16 * np.pi * a * c * G)) * ( kappa * l * P / (m * T**4))
+
     grad_ad = get_grad_ad(P, T)
     grad_rad = get_grad_rad(P, T, kappa, l, m)
 
